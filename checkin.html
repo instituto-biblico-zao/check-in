@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Check-in — INSTITUTO BÍBLICO ZAO</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#F7F6F2;--surface:#FFFFFF;--surface2:#F0EEE8;
+  --text:#1A1916;--text2:#6B6860;--text3:#A8A59E;
+  --green:#3B6D11;--green-bg:#EAF3DE;--green-mid:#639922;
+  --red:#A32D2D;--red-bg:#FCEBEB;
+  --blue:#185FA5;--blue-bg:#E6F1FB;
+  --border:rgba(26,25,22,0.10);--border2:rgba(26,25,22,0.18);
+  --radius:12px;--radius-sm:8px;--radius-xs:6px;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);}
+body{font-family:'DM Sans',sans-serif;color:var(--text);font-size:14px;display:flex;flex-direction:column;}
+
+/* LOADING */
+#loading{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;}
+#loading.hide{display:none;}
+.spinner{width:32px;height:32px;border:3px solid var(--border2);border-top-color:var(--text);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:14px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-msg{font-size:13px;color:var(--text2);}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;padding:12px 16px;background:var(--surface);border-bottom:0.5px solid var(--border);flex-shrink:0;gap:10px;}
+.topbar-logo{font-size:20px;}
+.topbar-body{flex:1;min-width:0;}
+.topbar-title{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.topbar-sub{font-size:11px;color:var(--text2);margin-top:1px;}
+.topbar-clock{font-size:12px;color:var(--text2);font-family:'DM Mono',monospace;white-space:nowrap;}
+
+/* AULA BAR */
+.aula-bar{padding:8px 16px;background:var(--surface);border-bottom:0.5px solid var(--border);flex-shrink:0;}
+.aula-bar select{width:100%;padding:8px 10px;border:0.5px solid var(--border2);border-radius:var(--radius-xs);font-size:13px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch;}
+
+/* SEARCH */
+.search-row{margin-bottom:14px;position:relative;}
+.search-row input{width:100%;padding:12px 14px 12px 42px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface);font-size:16px;color:var(--text);font-family:'DM Sans',sans-serif;}
+.search-row input:focus{outline:none;border-color:var(--blue);}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:16px;pointer-events:none;}
+
+/* GRID */
+.student-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
+.s-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px 10px;cursor:pointer;text-align:center;user-select:none;transition:transform 0.1s;}
+.s-card:active:not(.checked){transform:scale(0.96);}
+.s-card.checked{background:var(--green-bg);border-color:rgba(99,153,34,0.3);cursor:pointer;}
+.s-av{width:48px;height:48px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;}
+.s-card:not(.checked) .s-av{background:var(--surface2);color:var(--text2);}
+.s-card.checked .s-av{background:rgba(99,153,34,0.2);color:var(--green);}
+.s-name{font-size:12px;font-weight:500;line-height:1.35;}
+.s-card.checked .s-name{color:var(--green);}
+.s-time{font-size:10px;margin-top:4px;color:var(--text3);}
+.s-card.checked .s-time{color:var(--green-mid);}
+.no-students{text-align:center;color:var(--text2);padding:40px 0;font-size:13px;}
+
+/* OVERLAY */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:200;}
+.overlay.show{display:flex;}
+.ov-card{background:var(--surface);border-radius:16px;padding:2rem;text-align:center;width:88%;max-width:300px;animation:pop 0.18s ease;}
+@keyframes pop{from{transform:scale(0.9);opacity:0;}to{transform:scale(1);opacity:1;}}
+.ov-icon{font-size:48px;margin-bottom:12px;}
+.ov-name{font-size:18px;font-weight:600;margin-bottom:4px;}
+.ov-sub{font-size:13px;color:var(--text2);}
+.ov-btn{margin-top:1rem;width:100%;padding:11px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:none;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.ov-btn-red{background:var(--red);border:none;color:#fff;font-weight:600;}
+
+/* ERROR */
+.error-state{text-align:center;padding:60px 24px;}
+.error-icon{font-size:40px;margin-bottom:16px;}
+.error-title{font-size:16px;font-weight:600;margin-bottom:8px;}
+.error-msg{font-size:13px;color:var(--text2);line-height:1.6;}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="loading-msg" id="loading-msg">Carregando...</div>
+</div>
+
+<div class="topbar" id="topbar" style="display:none">
+  <div class="topbar-logo">✝️</div>
+  <div class="topbar-body">
+    <div class="topbar-title" id="turma-nome">INSTITUTO BÍBLICO ZAO</div>
+    <div class="topbar-sub">Check-in de presença</div>
+  </div>
+  <div class="topbar-clock" id="ci-clock"></div>
+</div>
+
+<div class="aula-bar" id="aula-bar" style="display:none">
+  <select id="aula-sel" onchange="ciRender()"></select>
+</div>
+
+<div class="content" id="content" style="display:none">
+  <div class="search-row">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="ci-search" placeholder="Buscar seu nome..." oninput="ciRender()">
+  </div>
+  <div class="student-grid" id="ci-grid"></div>
+  <div class="no-students" id="ci-empty" style="display:none">Nenhum aluno encontrado</div>
+</div>
+
+<div id="error-state" style="display:none" class="error-state">
+  <div class="error-icon">⚠️</div>
+  <div class="error-title">Não foi possível carregar</div>
+  <div class="error-msg" id="error-msg">Verifique sua conexão e tente novamente.</div>
+  <button onclick="location.reload()" style="margin-top:20px;padding:10px 24px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--surface);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">↺ Tentar novamente</button>
+</div>
+
+<!-- Erro temporário -->
+<div id="erro-temp" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#A32D2D;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:300;white-space:nowrap;text-align:center;max-width:90%;"></div>
+
+<!-- Overlay loading check-in -->
+<div class="overlay" id="ov-loading">
+  <div class="ov-card">
+    <div style="width:36px;height:36px;border:3px solid var(--border2);border-top-color:var(--green);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;"></div>
+    <div class="ov-name" id="ov-loading-nome"></div>
+    <div class="ov-sub">Registrando presença...</div>
+  </div>
+</div>
+
+<!-- Overlay confirmação check-in -->
+<div class="overlay" id="ov-ok" onclick="ciCloseOv()">
+  <div class="ov-card" onclick="event.stopPropagation()">
+    <div class="ov-icon">✅</div>
+    <div class="ov-name" id="ov-nome"></div>
+    <div class="ov-sub">Presença registrada!</div>
+    <button class="ov-btn" onclick="ciCloseOv()">Fechar</button>
+  </div>
+</div>
+
+<!-- Overlay cancelar check-in -->
+<div class="overlay" id="ov-undo" onclick="ciCloseUndo()">
+  <div class="ov-card" onclick="event.stopPropagation()">
+    <div class="ov-icon">↩️</div>
+    <div class="ov-name" id="ov-undo-nome"></div>
+    <div class="ov-sub" style="margin-bottom:0.5rem">Deseja cancelar este check-in?</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:1rem;">Isso remove a presença registrada.</div>
+    <div style="display:flex;gap:8px;">
+      <button class="ov-btn" style="flex:1;margin-top:0;" onclick="ciCloseUndo()">Não, manter</button>
+      <button class="ov-btn ov-btn-red" style="flex:1;" onclick="ciConfirmUndo()">Sim, cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──
+// IMPORTANTE: Cole aqui a URL do seu Google Apps Script Web App
+// É a mesma URL configurada no app principal em Configurações > Sistema
+var SHEETS_URL_FIXA = 'https://script.google.com/macros/s/AKfycbzvNcTtn88anqXL8LlyBoF57NLkCXIavpPCrOVI4qSytKNDOVCYdrVle-lar8LN_Exy/exec';
+
+var CI_SHEETS_URL = '';
+var CI_TURMA_ID = '';
+var ciDados = null;
+var ciUndoName = null;
+var ciUndoAulaId = null;
+
+// ── INIT ──
+function ciInit() {
+  var params = new URLSearchParams(window.location.search);
+  CI_TURMA_ID = params.get('turma') || '';
+
+  // Prioridade: 1) localStorage do app principal, 2) URL fixa embutida
+  try {
+    var stored = localStorage.getItem('zao_db3');
+    if (stored) {
+      var db = JSON.parse(stored);
+      CI_SHEETS_URL = db.sheetsUrl || SHEETS_URL_FIXA;
+      ciDados = db;
+    } else {
+      CI_SHEETS_URL = SHEETS_URL_FIXA;
+    }
+  } catch(e) {
+    CI_SHEETS_URL = SHEETS_URL_FIXA;
+  }
+
+  ciUpdateClock();
+  setInterval(ciUpdateClock, 30000);
+  ciCarregar();
+}
+
+async function ciCarregar() {
+  // Se tem dados locais com a turma, usa direto
+  if (ciDados && ciDados.turmas && ciGetTurma(CI_TURMA_ID)) {
+    ciMostrarApp();
+    return;
+  }
+
+  // Senão busca do Sheets
+  if (!CI_SHEETS_URL) {
+    ciMostrarErro('URL do servidor não configurada. Edite o arquivo checkin.html e cole sua URL do Google Apps Script na variável SHEETS_URL_FIXA.');
+    return;
+  }
+
+  try {
+    document.getElementById('loading-msg').textContent = 'Carregando turma...';
+    var url = CI_SHEETS_URL + '?acao=carregar&t=' + Date.now();
+    var resp = await fetch(url);
+    var json = await resp.json();
+    if (json.ok && json.dados) {
+      ciDados = json.dados;
+      ciMostrarApp();
+    } else {
+      ciMostrarErro('Erro ao carregar dados do servidor.');
+    }
+  } catch(e) {
+    ciMostrarErro('Sem conexão com o servidor. Verifique o Wi-Fi e tente novamente.');
+  }
+}
+
+function ciGetTurma(id) {
+  if (!ciDados || !ciDados.turmas) return null;
+  return ciDados.turmas.filter(function(t){ return t.id === id; })[0] || ciDados.turmas[0] || null;
+}
+
+function ciGetAula(turma, id) {
+  if (!turma || !turma.aulas) return null;
+  return turma.aulas.filter(function(a){ return a.id === id; })[0] || null;
+}
+
+function ciMostrarApp() {
+  var t = ciGetTurma(CI_TURMA_ID);
+  if (!t) { ciMostrarErro('Turma não encontrada.'); return; }
+
+  document.getElementById('turma-nome').textContent = t.nome;
+  document.getElementById('loading').classList.add('hide');
+  document.getElementById('topbar').style.display = 'flex';
+  document.getElementById('aula-bar').style.display = 'block';
+  document.getElementById('content').style.display = 'block';
+
+  // Popula seletor de aulas
+  var sel = document.getElementById('aula-sel'); sel.innerHTML = '';
+  (t.aulas || []).forEach(function(a) {
+    var o = document.createElement('option'); o.value = a.id;
+    o.textContent = a.nome + ' — ' + ciFmtDate(a.data);
+    o.selected = a.id === t.aulaAtiva;
+    sel.appendChild(o);
+  });
+
+  ciRender();
+}
+
+function ciMostrarErro(msg) {
+  document.getElementById('loading').classList.add('hide');
+  document.getElementById('error-msg').textContent = msg;
+  document.getElementById('error-state').style.display = 'block';
+}
+
+// ── RENDER ──
+function ciRender() {
+  var t = ciGetTurma(CI_TURMA_ID);
+  if (!t) return;
+  var aulaId = document.getElementById('aula-sel').value;
+  var aula = ciGetAula(t, aulaId);
+  var q = document.getElementById('ci-search').value.toLowerCase();
+  var grid = document.getElementById('ci-grid');
+  var empty = document.getElementById('ci-empty');
+  grid.innerHTML = '';
+
+  var filtered = (t.alunos || []).filter(function(s){ return s.toLowerCase().indexOf(q) >= 0; });
+  if (!filtered.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  var presenca = aula ? (aula.presenca || {}) : {};
+  filtered.forEach(function(name) {
+    var ts = presenca[name]; var checked = ts && ts > 0;
+    var card = document.createElement('div');
+    card.className = 's-card' + (checked ? ' checked' : '');
+    card.innerHTML = '<div class="s-av">' + ciInitials(name) + '</div>'
+      + '<div class="s-name">' + name + '</div>'
+      + '<div class="s-time">' + (checked ? '✓ ' + ciFmtTime(ts) + ' · cancelar' : 'toque para confirmar') + '</div>';
+    if (checked) card.onclick = (function(n,ai){ return function(){ ciAskUndo(n,ai); }; })(name, aulaId);
+    else card.onclick = (function(n,ai){ return function(){ ciCheckin(n,ai); }; })(name, aulaId);
+    grid.appendChild(card);
+  });
+}
+
+// ── CHECK-IN ──
+async function ciCheckin(name, aulaId) {
+  var t = ciGetTurma(CI_TURMA_ID);
+  var aula = ciGetAula(t, aulaId); if (!aula) return;
+  if (!aula.presenca) aula.presenca = {};
+  aula.presenca[name] = Date.now();
+  ciSalvarLocal();
+
+  // Mostra loading overlay enquanto sincroniza
+  document.getElementById('ov-loading-nome').textContent = name;
+  document.getElementById('ov-loading').classList.add('show');
+
+  try {
+    var payload = { acao: 'salvar', dados: ciDados };
+    var resp = await fetch(CI_SHEETS_URL, { method: 'POST', body: JSON.stringify(payload) });
+    var json = await resp.json();
+    document.getElementById('ov-loading').classList.remove('show');
+    if (json.ok) {
+      // Sucesso — mostra confirmação
+      document.getElementById('ov-nome').textContent = name;
+      document.getElementById('ov-ok').classList.add('show');
+      setTimeout(ciCloseOv, 2000);
+    } else {
+      ciMostrarErroTemp('Erro ao registrar. Tente novamente.');
+      // Desfaz localmente se falhou
+      delete aula.presenca[name];
+      ciSalvarLocal();
+    }
+  } catch(e) {
+    document.getElementById('ov-loading').classList.remove('show');
+    ciMostrarErroTemp('Sem conexão. Verifique o Wi-Fi e tente novamente.');
+    // Desfaz localmente se falhou
+    delete aula.presenca[name];
+    ciSalvarLocal();
+  }
+  ciRender();
+}
+
+function ciCloseOv() { document.getElementById('ov-ok').classList.remove('show'); }
+
+function ciMostrarErroTemp(msg) {
+  var el = document.getElementById('erro-temp');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(function(){ el.style.display = 'none'; }, 4000);
+}
+
+function ciAskUndo(name, aulaId) {
+  ciUndoName = name; ciUndoAulaId = aulaId;
+  document.getElementById('ov-undo-nome').textContent = name;
+  document.getElementById('ov-undo').classList.add('show');
+}
+function ciCloseUndo() { document.getElementById('ov-undo').classList.remove('show'); }
+async function ciConfirmUndo() {
+  var t = ciGetTurma(CI_TURMA_ID);
+  var aula = ciGetAula(t, ciUndoAulaId); if (!aula) { ciCloseUndo(); return; }
+  delete aula.presenca[ciUndoName];
+  ciCloseUndo();
+  ciSalvarLocal();
+  ciRender();
+  // Sincroniza cancelamento com Sheets
+  try {
+    var payload = { acao: 'salvar', dados: ciDados };
+    await fetch(CI_SHEETS_URL, { method: 'POST', body: JSON.stringify(payload) });
+  } catch(e) {}
+  ciUndoName = null; ciUndoAulaId = null;
+}
+
+// ── PERSISTÊNCIA LOCAL ──
+function ciSalvarLocal() {
+  // Salva no mesmo localStorage do app principal para o professor sincronizar depois
+  try { localStorage.setItem('zao_db3', JSON.stringify(ciDados)); } catch(e) {}
+}
+
+// ── UTILS ──
+function ciInitials(n){ return n.trim().split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase(); }
+function ciFmtTime(ts){ return ts ? new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '—'; }
+function ciFmtDate(s){ if(!s)return''; var p=s.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
+function ciUpdateClock(){ document.getElementById('ci-clock').textContent = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+
+ciInit();
+</script>
+</body>
+</html>
