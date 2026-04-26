@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Instituto Bíblico ZAO — Presença</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#F7F6F2;--surface:#FFFFFF;--surface2:#F0EEE8;
+  --text:#1A1916;--text2:#6B6860;--text3:#A8A59E;
+  --green:#3B6D11;--green-bg:#EAF3DE;--green-mid:#639922;
+  --red:#A32D2D;--red-bg:#FCEBEB;
+  --blue:#185FA5;--blue-bg:#E6F1FB;
+  --amber:#854F0B;--amber-bg:#FAEEDA;
+  --border:rgba(26,25,22,0.10);--border2:rgba(26,25,22,0.18);
+  --radius:12px;--radius-sm:8px;--radius-xs:6px;
+}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;display:flex;flex-direction:column;}
+.screen{display:none;flex-direction:column;height:100vh;overflow:hidden;}
+.screen.show{display:flex;}
+
+/* ── PIN ── */
+#scr-pin{align-items:center;justify-content:center;background:var(--bg);}
+.pin-wrap{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:2rem 2.5rem;width:320px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.06);}
+.pin-logo{font-size:32px;margin-bottom:0.5rem;}
+.pin-title{font-size:18px;font-weight:600;margin-bottom:2px;}
+.pin-sub{font-size:12px;color:var(--text2);margin-bottom:1.5rem;line-height:1.5;}
+.pin-dots{display:flex;justify-content:center;gap:12px;margin-bottom:1.5rem;}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border2);transition:all 0.15s;}
+.pin-dot.filled{background:var(--text);border-color:var(--text);}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;}
+.pin-key{padding:16px;border:0.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);font-size:20px;font-weight:500;cursor:pointer;transition:all 0.12s;font-family:'DM Mono',monospace;user-select:none;}
+.pin-key:active{transform:scale(0.93);background:var(--border);}
+.pin-error{font-size:12px;color:var(--red);min-height:18px;}
+.pin-hint{font-size:11px;color:var(--text3);margin-top:10px;}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--surface);border-bottom:0.5px solid var(--border);flex-shrink:0;}
+.topbar-title{font-size:14px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.topbar-meta{font-size:12px;color:var(--text2);white-space:nowrap;}
+.icon-btn{background:none;border:0.5px solid var(--border2);border-radius:var(--radius-xs);padding:6px 10px;font-size:12px;color:var(--text2);cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;}
+.icon-btn:active{background:var(--surface2);}
+.icon-btn.danger{color:var(--red);border-color:rgba(163,45,45,0.2);}
+
+/* ── TABBAR ── */
+.tabbar{display:flex;background:var(--surface);border-bottom:0.5px solid var(--border);flex-shrink:0;}
+.tab{flex:1;padding:10px 4px;text-align:center;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;}
+.tab.active{color:var(--text);border-bottom-color:var(--text);}
+
+/* ── SCROLLABLE CONTENT ── */
+.content{flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch;}
+
+/* ── HOME ── */
+.section-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;margin-top:16px;}
+.section-label:first-child{margin-top:0;}
+.class-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:border-color 0.15s;}
+.class-card:active{background:var(--surface2);}
+.class-card-icon{width:40px;height:40px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.class-card-body{flex:1;min-width:0;}
+.class-card-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.class-card-meta{font-size:12px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.class-card-badge{font-size:11px;font-weight:500;padding:3px 8px;border-radius:20px;flex-shrink:0;}
+.badge-green{background:var(--green-bg);color:var(--green);}
+.badge-amber{background:var(--amber-bg);color:var(--amber);}
+.badge-gray{background:var(--surface2);color:var(--text3);}
+.new-class-btn{width:100%;padding:14px;border:0.5px dashed var(--border2);border-radius:var(--radius);background:none;font-size:13px;color:var(--text2);cursor:pointer;margin-top:4px;font-family:'DM Sans',sans-serif;}
+.new-class-btn:active{background:var(--surface);}
+
+/* ── CHECK-IN ── */
+.search-row{margin-bottom:14px;position:relative;}
+.search-row input{width:100%;padding:11px 14px 11px 40px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface);font-size:16px;color:var(--text);font-family:'DM Sans',sans-serif;}
+.search-row input:focus{outline:none;border-color:var(--blue);}
+.search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:15px;pointer-events:none;}
+.student-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
+.s-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px 10px;cursor:pointer;text-align:center;transition:all 0.12s;user-select:none;}
+.s-card:active:not(.checked){transform:scale(0.96);}
+.s-card.checked{background:var(--green-bg);border-color:rgba(99,153,34,0.3);cursor:default;}
+.s-card.absent-mark{background:var(--red-bg);border-color:rgba(163,45,45,0.2);cursor:default;}
+.s-av{width:48px;height:48px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;}
+.s-card:not(.checked):not(.absent-mark) .s-av{background:var(--surface2);color:var(--text2);}
+.s-card.checked .s-av{background:rgba(99,153,34,0.2);color:var(--green);}
+.s-card.absent-mark .s-av{background:rgba(163,45,45,0.15);color:var(--red);}
+.s-name{font-size:12px;font-weight:500;line-height:1.35;}
+.s-card.checked .s-name{color:var(--green);}
+.s-card.absent-mark .s-name{color:var(--red);}
+.s-time{font-size:10px;margin-top:4px;color:var(--text3);}
+.s-card.checked .s-time{color:var(--green-mid);}
+.no-students{text-align:center;color:var(--text2);padding:40px 0;font-size:13px;}
+
+/* ── AULA SELECTOR ── */
+.aula-bar{padding:8px 16px;background:var(--surface);border-bottom:0.5px solid var(--border);flex-shrink:0;}
+.aula-bar select{width:100%;padding:8px 10px;border:0.5px solid var(--border2);border-radius:var(--radius-xs);font-size:13px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+
+/* ── OVERLAY ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:500;}
+.overlay.show{display:flex;}
+.ov-card{background:var(--surface);border-radius:16px;padding:2rem 2rem;text-align:center;width:88%;max-width:320px;animation:pop 0.18s ease;}
+@keyframes pop{from{transform:scale(0.9);opacity:0;}to{transform:scale(1);opacity:1;}}
+.ov-icon{font-size:48px;margin-bottom:12px;}
+.ov-name{font-size:18px;font-weight:600;margin-bottom:4px;}
+.ov-sub{font-size:13px;color:var(--text2);}
+.ov-close{margin-top:1.25rem;width:100%;padding:11px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:none;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.ov-close:active{background:var(--surface2);}
+.ov-actions{display:flex;flex-direction:column;gap:8px;margin-top:1.25rem;}
+
+/* ── PAINEL ── */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.stat{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:12px 8px;text-align:center;}
+.stat-n{font-size:24px;font-weight:600;}
+.stat-l{font-size:11px;color:var(--text2);margin-top:2px;}
+.green-n{color:var(--green);}
+.red-n{color:var(--red);}
+.presence-table{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;}
+.pt-header{display:grid;grid-template-columns:1fr 56px 64px 52px;gap:6px;padding:8px 12px;background:var(--surface2);font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;}
+.pt-row{display:grid;grid-template-columns:1fr 56px 64px 52px;gap:6px;align-items:center;padding:9px 12px;border-top:0.5px solid var(--border);}
+.pt-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;flex-shrink:0;}
+.pt-name-wrap{display:flex;align-items:center;gap:8px;min-width:0;}
+.pt-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pt-time{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;text-align:center;}
+.pt-badge{font-size:10px;font-weight:600;padding:2px 6px;border-radius:20px;text-align:center;white-space:nowrap;}
+.toggle-btn{font-size:10px;padding:3px 6px;border:0.5px solid var(--border2);border-radius:var(--radius-xs);background:none;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;}
+.toggle-btn:active{background:var(--surface2);}
+.export-row{display:flex;gap:8px;}
+.export-btn{flex:1;padding:10px 4px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.export-btn:active{background:var(--surface2);}
+.sync-banner{border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:12px;font-size:12px;display:flex;align-items:center;gap:8px;}
+.sync-banner.idle{background:var(--surface2);color:var(--text2);}
+.sync-banner.ok{background:var(--green-bg);color:var(--green);}
+.sync-banner.err{background:var(--red-bg);color:var(--red);}
+
+/* ── CONFIG ── */
+.form-group{margin-bottom:12px;}
+.form-group label{display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:4px;}
+.form-group input,.form-group select{width:100%;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--blue);}
+.config-panel{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:14px;}
+.config-panel-title{font-size:13px;font-weight:600;margin-bottom:10px;}
+.student-config-list{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;}
+.sc-row{display:flex;align-items:center;padding:10px 12px;border-bottom:0.5px solid var(--border);font-size:13px;gap:8px;}
+.sc-row:last-child{border-bottom:none;}
+.sc-name{flex:1;}
+.sc-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:18px;padding:0 4px;}
+.add-row{display:flex;gap:8px;margin-bottom:10px;}
+.add-row input{flex:1;padding:9px 12px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;}
+.add-row button{padding:9px 14px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.prim-btn{width:100%;padding:12px;background:var(--text);color:#fff;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;margin-top:4px;font-family:'DM Sans',sans-serif;}
+.prim-btn:active{opacity:0.85;}
+.danger-btn{width:100%;padding:10px;background:none;color:var(--red);border:0.5px solid rgba(163,45,45,0.2);border-radius:var(--radius-sm);font-size:12px;cursor:pointer;margin-top:8px;font-family:'DM Sans',sans-serif;}
+.aula-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:8px;cursor:pointer;}
+.aula-card:active{background:var(--surface2);}
+.aula-card.active-aula{border-color:var(--green-mid);background:var(--green-bg);}
+.aula-card-body{flex:1;min-width:0;}
+.aula-name{font-size:13px;font-weight:500;}
+.aula-meta{font-size:11px;color:var(--text2);margin-top:2px;}
+.new-aula-btn{width:100%;padding:10px;border:0.5px dashed var(--border2);border-radius:var(--radius-sm);background:none;font-size:12px;color:var(--text2);cursor:pointer;margin-top:4px;font-family:'DM Sans',sans-serif;}
+.pin-row{display:flex;gap:8px;align-items:center;}
+.pin-row input{flex:1;padding:9px 12px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);font-family:'DM Mono',monospace;font-size:18px;letter-spacing:6px;background:var(--surface);color:var(--text);}
+.empty-state{text-align:center;padding:40px 16px;color:var(--text2);}
+.empty-icon{font-size:36px;margin-bottom:10px;}
+</style>
+</head>
+<body>
+
+<!-- ══ PIN ══ -->
+<div class="screen show" id="scr-pin">
+  <div class="pin-wrap">
+    <div class="pin-logo">✝️</div>
+    <div class="pin-title">Instituto Bíblico ZAO</div>
+    <div class="pin-sub">App de Presença<br>Acesso do professor</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key" style="visibility:hidden"></button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key" onclick="pinDel()" style="font-size:16px;">⌫</button>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+    <div class="pin-hint">PIN padrão: 1234 · Altere em Configurações</div>
+  </div>
+</div>
+
+<!-- ══ HOME ══ -->
+<div class="screen" id="scr-home">
+  <div class="topbar">
+    <div class="topbar-title">✝️ Instituto Bíblico ZAO</div>
+    <span id="home-clock" class="topbar-meta"></span>
+    <button class="icon-btn" onclick="goCheckin()">Alunos</button>
+    <button class="icon-btn" onclick="goTurmas()">⚙</button>
+    <button class="icon-btn danger" onclick="logout()">Sair</button>
+  </div>
+  <div class="content">
+    <div class="section-label">Turmas</div>
+    <div id="turmas-list"></div>
+    <button class="new-class-btn" onclick="goTurmas()">+ Nova turma</button>
+  </div>
+</div>
+
+<!-- ══ CHECK-IN ══ -->
+<div class="screen" id="scr-checkin">
+  <div class="topbar">
+    <div class="topbar-title" id="ci-title">Check-in</div>
+    <span class="topbar-meta" id="ci-clock"></span>
+    <button class="icon-btn" onclick="showScreen('scr-home')">← Voltar</button>
+  </div>
+  <div class="aula-bar">
+    <select id="ci-aula-sel" onchange="renderCheckin()"></select>
+  </div>
+  <div class="content">
+    <div class="search-row">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="ci-search" placeholder="Buscar nome..." oninput="renderCheckin()">
+    </div>
+    <div class="student-grid" id="ci-grid"></div>
+    <div class="no-students" id="ci-empty" style="display:none">Nenhum aluno encontrado</div>
+  </div>
+</div>
+
+<!-- ══ PAINEL ══ -->
+<div class="screen" id="scr-painel">
+  <div class="topbar">
+    <div class="topbar-title" id="pa-title">Presença</div>
+    <button class="icon-btn" onclick="syncSheets()" id="sync-btn" style="display:none">↑ Sheets</button>
+    <button class="icon-btn danger" onclick="resetAula()">↺</button>
+    <button class="icon-btn" onclick="showScreen('scr-home')">← Voltar</button>
+  </div>
+  <div class="aula-bar">
+    <select id="pa-aula-sel" onchange="renderPainel()"></select>
+  </div>
+  <div class="content">
+    <div id="sync-msg" style="display:none"></div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-n green-n" id="pa-pres">0</div><div class="stat-l">Presentes</div></div>
+      <div class="stat"><div class="stat-n red-n" id="pa-aus">0</div><div class="stat-l">Ausentes</div></div>
+      <div class="stat"><div class="stat-n" id="pa-pct">0%</div><div class="stat-l">Frequência</div></div>
+    </div>
+    <div class="presence-table">
+      <div class="pt-header"><div>Aluno</div><div>Hora</div><div>Status</div><div>Ação</div></div>
+      <div id="pa-list"></div>
+    </div>
+    <div class="export-row">
+      <button class="export-btn" onclick="exportCSV()">⬇ CSV</button>
+      <button class="export-btn" onclick="exportTxt()">📋 Copiar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONFIG ══ -->
+<div class="screen" id="scr-turmas">
+  <div class="topbar">
+    <div class="topbar-title">⚙ Configurações</div>
+    <button class="icon-btn" onclick="showScreen('scr-home')">← Voltar</button>
+  </div>
+  <div class="tabbar">
+    <div class="tab active" onclick="cfgTab('turma',this)">Turmas</div>
+    <div class="tab" onclick="cfgTab('aulas',this)">Aulas</div>
+    <div class="tab" onclick="cfgTab('sistema',this)">Sistema</div>
+  </div>
+  <div class="content" id="cfg-content"></div>
+</div>
+
+<!-- ══ OVERLAY SUCCESS ══ -->
+<div class="overlay" id="ov-ok" onclick="closeOv('ov-ok')">
+  <div class="ov-card" onclick="event.stopPropagation()">
+    <div class="ov-icon">✅</div>
+    <div class="ov-name" id="ov-ok-name"></div>
+    <div class="ov-sub">Presença registrada!</div>
+    <button class="ov-close" onclick="closeOv('ov-ok')">Fechar</button>
+  </div>
+</div>
+
+<!-- ══ OVERLAY TURMA MENU ══ -->
+<div class="overlay" id="ov-menu" onclick="closeOv('ov-menu')">
+  <div class="ov-card" onclick="event.stopPropagation()">
+    <div class="ov-icon" id="ov-menu-icon"></div>
+    <div class="ov-name" id="ov-menu-nome"></div>
+    <div class="ov-sub" id="ov-menu-sub"></div>
+    <div class="ov-actions">
+      <button class="prim-btn" onclick="closeOv('ov-menu');goCheckin()">📱 Modo Check-in (alunos)</button>
+      <button class="ov-close" onclick="closeOv('ov-menu');goPainel()">📊 Painel de Presença</button>
+      <button class="ov-close" id="ov-menu-cfg-btn">⚙ Configurar turma</button>
+      <button class="ov-close" onclick="closeOv('ov-menu')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════ STATE ══════════════
+var DB = {
+  pin: '1234',
+  sheetsUrl: '',
+  turmas: [
+    { id:'t1', nome:'Teologia Sistemática', cor:'#185FA5', icone:'📖',
+      alunos:['Ana Paula Costa','Bruno Lima','Camila Oliveira','Daniel Ferreira','Eduarda Santos','Felipe Rodrigues','Gabriela Martins','Hugo Alves'],
+      aulas:[{id:'a1',nome:'Aula 1 — Bibliologia',data:'2025-04-26',presenca:{}},{id:'a2',nome:'Aula 2 — Teologia Própria',data:'2025-05-03',presenca:{}}],
+      aulaAtiva:'a1' },
+    { id:'t2', nome:'Evangelhos Sinóticos', cor:'#3B6D11', icone:'✝️',
+      alunos:['Karla Mendes','Lucas Pereira','Marina Souza','Nicolas Barbosa','Olivia Campos'],
+      aulas:[{id:'a3',nome:'Aula 1 — Introdução',data:'2025-04-25',presenca:{}}],
+      aulaAtiva:'a3' }
+  ],
+  turmaAtiva: 't1'
+};
+
+// Persistência via localStorage
+function saveDB(){ try{ localStorage.setItem('zao_db', JSON.stringify(DB)); }catch(e){} }
+function loadDB(){
+  try{
+    var s = localStorage.getItem('zao_db');
+    if(s){ DB = JSON.parse(s); }
+  }catch(e){}
+}
+loadDB();
+
+var pinBuf = '';
+var cfgTabAtual = 'turma';
+var cfgTurmaId = null;
+
+// ══════════════ UTILS ══════════════
+function initials(n){ return n.trim().split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase(); }
+function fmtTime(ts){ return ts ? new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '—'; }
+function fmtDate(s){ if(!s) return ''; var p=s.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
+function uid(){ return 'x'+Math.random().toString(36).slice(2,8); }
+function getTurma(id){ return DB.turmas.filter(function(t){return t.id===id;})[0]; }
+function getAula(turma,id){ return turma ? turma.aulas.filter(function(a){return a.id===id;})[0] : null; }
+function turmaAtiva(){ return getTurma(DB.turmaAtiva); }
+function today(){ return new Date().toISOString().slice(0,10); }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('show');}); document.getElementById(id).classList.add('show'); }
+function closeOv(id){ document.getElementById(id).classList.remove('show'); }
+function updateClock(){
+  var s = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  var a = document.getElementById('home-clock'); if(a) a.textContent = s;
+  var b = document.getElementById('ci-clock'); if(b) b.textContent = s;
+}
+
+// ══════════════ PIN ══════════════
+function pinKey(k){
+  if(pinBuf.length >= 4) return;
+  pinBuf += k;
+  updateDots();
+  if(pinBuf.length === 4) setTimeout(checkPin, 100);
+}
+function pinDel(){ pinBuf = pinBuf.slice(0,-1); updateDots(); document.getElementById('pin-error').textContent=''; }
+function updateDots(){ for(var i=0;i<4;i++) document.getElementById('d'+i).classList.toggle('filled', i < pinBuf.length); }
+function checkPin(){
+  if(pinBuf === DB.pin){
+    document.getElementById('pin-error').textContent='';
+    pinBuf=''; updateDots();
+    renderHome(); showScreen('scr-home');
+  } else {
+    document.getElementById('pin-error').textContent='PIN incorreto. Tente novamente.';
+    pinBuf=''; updateDots();
+  }
+}
+function logout(){ pinBuf=''; updateDots(); document.getElementById('pin-error').textContent=''; showScreen('scr-pin'); }
+
+// ══════════════ HOME ══════════════
+function renderHome(){
+  var el = document.getElementById('turmas-list'); el.innerHTML='';
+  DB.turmas.forEach(function(t){
+    var aula = getAula(t, t.aulaAtiva);
+    var pres = aula ? Object.values(aula.presenca).filter(function(v){return v>0;}).length : 0;
+    var total = t.alunos.length;
+    var pct = total ? Math.round(pres/total*100) : 0;
+    var bc = pct>=80?'badge-green':pct>0?'badge-amber':'badge-gray';
+    var bt = pct>0 ? pct+'%' : 'sem check-ins';
+    var d = document.createElement('div'); d.className='class-card';
+    d.innerHTML='<div class="class-card-icon" style="background:'+t.cor+'22;">'+t.icone+'</div>'
+      +'<div class="class-card-body"><div class="class-card-name">'+t.nome+'</div>'
+      +'<div class="class-card-meta">'+total+' alunos · '+(aula?aula.nome:'sem aula ativa')+'</div></div>'
+      +'<span class="class-card-badge '+bc+'">'+bt+'</span>';
+    d.onclick = (function(turma){ return function(){ DB.turmaAtiva=turma.id; openMenu(turma); }; })(t);
+    el.appendChild(d);
+  });
+}
+
+function openMenu(t){
+  document.getElementById('ov-menu-icon').textContent = t.icone;
+  document.getElementById('ov-menu-nome').textContent = t.nome;
+  document.getElementById('ov-menu-sub').textContent = t.alunos.length+' alunos cadastrados';
+  document.getElementById('ov-menu-cfg-btn').onclick = function(){ closeOv('ov-menu'); goTurmaConfig(t.id); };
+  document.getElementById('ov-menu').classList.add('show');
+}
+
+// ══════════════ CHECK-IN ══════════════
+function goCheckin(){
+  var t = turmaAtiva(); if(!t){ alert('Selecione uma turma.'); return; }
+  document.getElementById('ci-title').textContent = t.nome;
+  populateSel('ci-aula-sel', t);
+  renderCheckin();
+  showScreen('scr-checkin');
+}
+function populateSel(selId, turma){
+  var sel = document.getElementById(selId); sel.innerHTML='';
+  turma.aulas.forEach(function(a){
+    var o = document.createElement('option'); o.value=a.id;
+    o.textContent = a.nome+' — '+fmtDate(a.data);
+    o.selected = a.id===turma.aulaAtiva;
+    sel.appendChild(o);
+  });
+}
+function renderCheckin(){
+  var t = turmaAtiva(); if(!t) return;
+  var aulaId = document.getElementById('ci-aula-sel').value;
+  var aula = getAula(t, aulaId);
+  var q = document.getElementById('ci-search').value.toLowerCase();
+  var grid = document.getElementById('ci-grid');
+  var empty = document.getElementById('ci-empty');
+  grid.innerHTML='';
+  var filtered = t.alunos.filter(function(s){ return s.toLowerCase().indexOf(q)>=0; });
+  if(!filtered.length){ empty.style.display='block'; return; }
+  empty.style.display='none';
+  filtered.forEach(function(name){
+    var st = aula ? aula.presenca[name] : null;
+    var checked = st && st>0; var absent = st===-1;
+    var card = document.createElement('div');
+    card.className = 's-card'+(checked?' checked':'')+(absent?' absent-mark':'');
+    card.innerHTML = '<div class="s-av">'+initials(name)+'</div>'
+      +'<div class="s-name">'+name+'</div>'
+      +'<div class="s-time">'+(checked?'✓ '+fmtTime(st):absent?'ausente':'toque para confirmar')+'</div>';
+    if(!checked && !absent){
+      card.onclick = (function(n,ai){ return function(){ doCheckin(n,ai); }; })(name, aulaId);
+    }
+    grid.appendChild(card);
+  });
+}
+function doCheckin(name, aulaId){
+  var t = turmaAtiva(); var aula = getAula(t, aulaId); if(!aula) return;
+  aula.presenca[name] = Date.now();
+  saveDB(); renderCheckin();
+  document.getElementById('ov-ok-name').textContent = name;
+  document.getElementById('ov-ok').classList.add('show');
+  setTimeout(function(){ closeOv('ov-ok'); }, 2800);
+}
+
+// ══════════════ PAINEL ══════════════
+function goPainel(){
+  var t = turmaAtiva(); if(!t) return;
+  document.getElementById('pa-title').textContent = t.nome;
+  document.getElementById('sync-btn').style.display = DB.sheetsUrl ? '' : 'none';
+  populateSel('pa-aula-sel', t);
+  renderPainel();
+  showScreen('scr-painel');
+}
+function renderPainel(){
+  var t = turmaAtiva(); if(!t) return;
+  var aulaId = document.getElementById('pa-aula-sel').value;
+  var aula = getAula(t, aulaId);
+  if(!aula){ document.getElementById('pa-list').innerHTML='<div style="padding:20px;text-align:center;color:var(--text2)">Sem aula.</div>'; return; }
+  var pres = t.alunos.filter(function(s){ return aula.presenca[s]>0; });
+  var pct = t.alunos.length ? Math.round(pres.length/t.alunos.length*100) : 0;
+  document.getElementById('pa-pres').textContent = pres.length;
+  document.getElementById('pa-aus').textContent = t.alunos.length - pres.length;
+  document.getElementById('pa-pct').textContent = pct+'%';
+  var list = document.getElementById('pa-list'); list.innerHTML='';
+  var sorted = t.alunos.filter(function(s){ return aula.presenca[s]>0; })
+    .sort(function(a,b){ return aula.presenca[a]-aula.presenca[b]; })
+    .concat(t.alunos.filter(function(s){ return !aula.presenca[s]||aula.presenca[s]===-1; }));
+  sorted.forEach(function(name){
+    var ts = aula.presenca[name]; var isP = ts>0;
+    var row = document.createElement('div'); row.className='pt-row';
+    row.innerHTML='<div class="pt-name-wrap"><div class="pt-av" style="background:'+(isP?'var(--green-bg)':'var(--surface2)')+';color:'+(isP?'var(--green)':'var(--text3)')+'">'+initials(name)+'</div>'
+      +'<span class="pt-name">'+name+'</span></div>'
+      +'<span class="pt-time">'+(isP?fmtTime(ts):'—')+'</span>'
+      +'<span class="pt-badge" style="background:'+(isP?'var(--green-bg)':'var(--red-bg)')+';color:'+(isP?'var(--green)':'var(--red)')+'">'+( isP?'Presente':'Ausente')+'</span>'
+      +'<button class="toggle-btn" onclick="toggleP(\''+name+'\',\''+aulaId+'\')">'+(isP?'↩':'✓')+'</button>';
+    list.appendChild(row);
+  });
+}
+function toggleP(name, aulaId){
+  var t = turmaAtiva(); var aula = getAula(t, aulaId); if(!aula) return;
+  aula.presenca[name] = aula.presenca[name]>0 ? -1 : Date.now();
+  saveDB(); renderPainel();
+}
+function resetAula(){
+  var t = turmaAtiva(); var aulaId = document.getElementById('pa-aula-sel').value;
+  var aula = getAula(t, aulaId); if(!aula) return;
+  if(!confirm('Resetar presenças de "'+aula.nome+'"?')) return;
+  aula.presenca = {}; saveDB(); renderPainel();
+}
+
+// ══════════════ EXPORT ══════════════
+function exportCSV(){
+  var t = turmaAtiva(); var aulaId = document.getElementById('pa-aula-sel').value;
+  var aula = getAula(t, aulaId); if(!aula) return;
+  var csv = 'Aluno,Status,Horário\n';
+  t.alunos.forEach(function(n){ var ts=aula.presenca[n]; csv+='"'+n+'",'+(ts>0?'"Presente"':'"Ausente"')+','+(ts>0?'"'+fmtTime(ts)+'"':'')+'\n'; });
+  var blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a'); a.href=url;
+  a.download='presenca_'+t.nome+'_'+aula.nome+'_'+today()+'.csv';
+  a.click(); URL.revokeObjectURL(url);
+}
+function exportTxt(){
+  var t = turmaAtiva(); var aulaId = document.getElementById('pa-aula-sel').value;
+  var aula = getAula(t, aulaId); if(!aula) return;
+  var txt = 'PRESENÇA — Instituto Bíblico ZAO\n'+t.nome+' · '+aula.nome+' — '+fmtDate(aula.data)+'\n'+'─'.repeat(44)+'\n\nPRESENTES:\n';
+  t.alunos.filter(function(s){return aula.presenca[s]>0;}).forEach(function(s){ txt+='  ✓ '+s+' ('+fmtTime(aula.presenca[s])+')\n'; });
+  txt+='\nAUSENTES:\n';
+  t.alunos.filter(function(s){return !aula.presenca[s]||aula.presenca[s]===-1;}).forEach(function(s){ txt+='  ✗ '+s+'\n'; });
+  var pres = t.alunos.filter(function(s){return aula.presenca[s]>0;}).length;
+  txt+='\n'+'─'.repeat(44)+'\nTotal: '+pres+'/'+t.alunos.length+' ('+Math.round(pres/t.alunos.length*100)+'%)';
+  if(navigator.clipboard){ navigator.clipboard.writeText(txt).then(function(){ alert('Lista copiada!'); }); }
+  else { prompt('Copie abaixo:', txt); }
+}
+
+// ══════════════ SHEETS SYNC ══════════════
+async function syncSheets(){
+  if(!DB.sheetsUrl){ alert('Configure a URL do Web App nas configurações.'); return; }
+  var t = turmaAtiva(); var aulaId = document.getElementById('pa-aula-sel').value;
+  var aula = getAula(t, aulaId); if(!aula) return;
+  var msgEl = document.getElementById('sync-msg');
+  msgEl.style.display='block';
+  msgEl.innerHTML='<div class="sync-banner idle">⏳ Sincronizando...</div>';
+  var rows = t.alunos.map(function(name){
+    var ts = aula.presenca[name];
+    return {aluno:name, status:ts>0?'Presente':'Ausente', horario:ts>0?fmtTime(ts):'', timestamp:ts>0?ts:''};
+  });
+  var payload = {turma:t.nome, aula:aula.nome, data:fmtDate(aula.data), rows:rows};
+  try{
+    var resp = await fetch(DB.sheetsUrl, {method:'POST', body:JSON.stringify(payload)});
+    if(resp.ok){ msgEl.innerHTML='<div class="sync-banner ok">✅ Sincronizado! <span onclick="document.getElementById(\'sync-msg\').style.display=\'none\'" style="margin-left:auto;cursor:pointer;font-weight:600;">×</span></div>'; }
+    else{ throw new Error('Erro '+resp.status); }
+  }catch(e){
+    msgEl.innerHTML='<div class="sync-banner err">❌ Erro: '+e.message+' <span onclick="document.getElementById(\'sync-msg\').style.display=\'none\'" style="margin-left:auto;cursor:pointer;font-weight:600;">×</span></div>';
+  }
+}
+
+// ══════════════ CONFIG ══════════════
+function goTurmas(){ cfgTabAtual='turma'; cfgTurmaId=DB.turmas[0]?DB.turmas[0].id:null; renderCfg(); showScreen('scr-turmas'); }
+function goTurmaConfig(id){ cfgTabAtual='turma'; cfgTurmaId=id; renderCfg(); showScreen('scr-turmas'); }
+function cfgTab(tab, el){
+  cfgTabAtual=tab;
+  document.querySelectorAll('.tabbar .tab').forEach(function(t){t.classList.remove('active');});
+  el.classList.add('active');
+  renderCfg();
+}
+function renderCfg(){
+  var c = document.getElementById('cfg-content');
+  if(cfgTabAtual==='turma') renderCfgTurma(c);
+  else if(cfgTabAtual==='aulas') renderCfgAulas(c);
+  else renderCfgSistema(c);
+}
+
+function renderCfgTurma(c){
+  var turma = getTurma(cfgTurmaId) || DB.turmas[0];
+  cfgTurmaId = turma ? turma.id : null;
+  var sel = '<select id="cfg-t-sel" onchange="cfgTurmaId=this.value;renderCfg()">'
+    + DB.turmas.map(function(t){ return '<option value="'+t.id+'"'+(t.id===cfgTurmaId?' selected':'')+'>'+t.nome+'</option>'; }).join('')+'</select>';
+  if(!turma){
+    c.innerHTML='<div class="form-group"><label>Turma</label>'+sel+'</div><div class="empty-state"><div class="empty-icon">🏫</div><p>Nenhuma turma.</p></div><button class="new-class-btn" onclick="addTurma()">+ Criar turma</button>';
+    return;
+  }
+  c.innerHTML='<div class="form-group"><label>Turma selecionada</label>'+sel+'</div>'
+    +'<div class="config-panel"><div class="config-panel-title">Dados</div>'
+    +'<div class="form-group"><label>Nome</label><input id="cfg-tn" value="'+turma.nome+'"></div>'
+    +'<div style="display:flex;gap:8px;">'
+    +'<div class="form-group" style="flex:1"><label>Ícone</label><input id="cfg-ti" value="'+turma.icone+'" style="font-size:20px;text-align:center;"></div>'
+    +'<div class="form-group" style="flex:1"><label>Cor</label><input type="color" id="cfg-tc" value="'+turma.cor+'" style="height:42px;padding:3px;cursor:pointer;"></div>'
+    +'</div><button class="prim-btn" onclick="saveTurma()">Salvar</button>'
+    +'<button class="danger-btn" onclick="deleteTurma()">Excluir turma</button></div>'
+    +'<div class="config-panel"><div class="config-panel-title">Alunos ('+turma.alunos.length+')</div>'
+    +'<div class="add-row"><input type="text" id="cfg-na" placeholder="Nome completo" onkeydown="if(event.key===\'Enter\')addAluno()"><button onclick="addAluno()">+</button></div>'
+    +'<div class="student-config-list" id="cfg-al">'
+    +turma.alunos.map(function(a,i){ return '<div class="sc-row"><span class="sc-name">'+a+'</span><button class="sc-del" onclick="removeAluno('+i+')">×</button></div>'; }).join('')
+    +(turma.alunos.length===0?'<div class="sc-row" style="color:var(--text3)">Nenhum aluno</div>':'')
+    +'</div></div>'
+    +'<button class="new-class-btn" onclick="addTurma()">+ Nova turma</button>';
+}
+function saveTurma(){
+  var t = getTurma(cfgTurmaId); if(!t) return;
+  t.nome = document.getElementById('cfg-tn').value.trim()||t.nome;
+  t.icone = document.getElementById('cfg-ti').value.trim()||t.icone;
+  t.cor = document.getElementById('cfg-tc').value;
+  saveDB(); renderCfg(); renderHome(); alert('Salvo!');
+}
+function addTurma(){
+  var nome = prompt('Nome da nova turma:'); if(!nome) return;
+  var t = {id:uid(),nome:nome,cor:'#185FA5',icone:'📖',alunos:[],aulas:[],aulaAtiva:null};
+  DB.turmas.push(t); cfgTurmaId=t.id; saveDB(); renderCfg();
+}
+function deleteTurma(){
+  if(!confirm('Excluir turma e todos os dados?')) return;
+  DB.turmas = DB.turmas.filter(function(t){return t.id!==cfgTurmaId;});
+  cfgTurmaId = DB.turmas[0]?DB.turmas[0].id:null;
+  saveDB(); renderCfg();
+}
+function addAluno(){
+  var inp = document.getElementById('cfg-na'); var nome = inp.value.trim(); if(!nome) return;
+  var t = getTurma(cfgTurmaId); if(!t||t.alunos.indexOf(nome)>=0){ inp.style.borderColor='var(--red)'; setTimeout(function(){inp.style.borderColor='';},1500); return; }
+  t.alunos.push(nome); inp.value=''; saveDB(); renderCfg();
+}
+function removeAluno(i){
+  var t = getTurma(cfgTurmaId); if(!t) return;
+  var nome = t.alunos[i]; t.alunos.splice(i,1);
+  t.aulas.forEach(function(a){ delete a.presenca[nome]; });
+  saveDB(); renderCfg();
+}
+
+function renderCfgAulas(c){
+  var turma = getTurma(cfgTurmaId)||DB.turmas[0]; cfgTurmaId=turma?turma.id:null;
+  var sel = '<select id="cfg-a-sel" onchange="cfgTurmaId=this.value;renderCfg()">'
+    +DB.turmas.map(function(t){return '<option value="'+t.id+'"'+(t.id===cfgTurmaId?' selected':'')+'>'+t.nome+'</option>';}).join('')+'</select>';
+  if(!turma){ c.innerHTML='<div class="form-group"><label>Turma</label>'+sel+'</div><div class="empty-state"><div class="empty-icon">📅</div><p>Crie uma turma primeiro.</p></div>'; return; }
+  c.innerHTML='<div class="form-group"><label>Turma</label>'+sel+'</div>'
+    +turma.aulas.map(function(a){
+      return '<div class="aula-card'+(a.id===turma.aulaAtiva?' active-aula':'')+'" onclick="setAulaAtiva(\''+turma.id+'\',\''+a.id+'\')">'
+        +'<div class="aula-card-body"><div class="aula-name">'+a.nome+'</div>'
+        +'<div class="aula-meta">'+fmtDate(a.data)+' · '+Object.values(a.presenca).filter(function(v){return v>0;}).length+'/'+turma.alunos.length+' presentes</div></div>'
+        +(a.id===turma.aulaAtiva?'<span class="class-card-badge badge-green">Ativa</span>':'')
+        +'<button class="sc-del" onclick="event.stopPropagation();deleteAula(\''+turma.id+'\',\''+a.id+'\')">×</button></div>';
+    }).join('')
+    +'<button class="new-aula-btn" onclick="addAula(\''+turma.id+'\')">+ Nova aula</button>';
+}
+function setAulaAtiva(turmaId, aulaId){ var t=getTurma(turmaId); if(t){t.aulaAtiva=aulaId;DB.turmaAtiva=turmaId;saveDB();renderCfg();} }
+function addAula(turmaId){
+  var t = getTurma(turmaId); if(!t) return;
+  var nome = prompt('Nome da aula (ex: Aula 3 — Cristologia):'); if(!nome) return;
+  var data = prompt('Data (AAAA-MM-DD):', today());
+  var aula = {id:uid(),nome:nome,data:data||today(),presenca:{}};
+  t.aulas.push(aula); t.aulaAtiva=aula.id; saveDB(); renderCfg();
+}
+function deleteAula(turmaId, aulaId){
+  var t = getTurma(turmaId); if(!t||!confirm('Excluir esta aula?')) return;
+  t.aulas = t.aulas.filter(function(a){return a.id!==aulaId;});
+  if(t.aulaAtiva===aulaId) t.aulaAtiva = t.aulas[0]?t.aulas[0].id:null;
+  saveDB(); renderCfg();
+}
+
+function renderCfgSistema(c){
+  c.innerHTML='<div class="config-panel"><div class="config-panel-title">PIN do professor</div>'
+    +'<p style="font-size:12px;color:var(--text2);margin-bottom:10px;">PIN atual: '+'•'.repeat(DB.pin.length)+'</p>'
+    +'<div class="form-group"><label>Novo PIN (4 dígitos)</label>'
+    +'<div class="pin-row"><input type="password" id="cfg-pin" maxlength="4" placeholder="••••" inputmode="numeric">'
+    +'<button class="icon-btn" onclick="savePin()">Salvar</button></div></div></div>'
+    +'<div class="config-panel"><div class="config-panel-title">Google Sheets</div>'
+    +'<p style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.6;">Cole a URL do Web App gerada pelo Google Apps Script para sincronizar presenças.</p>'
+    +'<div class="form-group"><label>URL do Web App</label><input type="url" id="cfg-url" value="'+DB.sheetsUrl+'" placeholder="https://script.google.com/macros/s/..."></div>'
+    +'<button class="prim-btn" onclick="saveUrl()">'+(DB.sheetsUrl?'Atualizar URL':'Salvar URL')+'</button>'
+    +(DB.sheetsUrl?'<p style="font-size:12px;color:var(--green);margin-top:8px;">✅ Integração ativa — botão Sincronizar aparece no Painel.</p>':'')
+    +'</div>'
+    +'<div class="config-panel"><div class="config-panel-title">Sobre</div>'
+    +'<p style="font-size:12px;color:var(--text2);line-height:1.7;">Instituto Bíblico ZAO · App de Presença v2.1<br>Dados salvos localmente no dispositivo.</p></div>';
+}
+function savePin(){
+  var np = document.getElementById('cfg-pin').value;
+  if(np.length!==4||!/^\d{4}$/.test(np)){ alert('PIN deve ter 4 dígitos numéricos.'); return; }
+  DB.pin=np; saveDB(); alert('PIN alterado!'); renderCfgSistema(document.getElementById('cfg-content'));
+}
+function saveUrl(){
+  var url = document.getElementById('cfg-url').value.trim();
+  DB.sheetsUrl=url; saveDB();
+  alert(url?'URL salva! O botão Sincronizar aparecerá no Painel.':'URL removida.');
+  renderCfgSistema(document.getElementById('cfg-content'));
+}
+
+// ══════════════ INIT ══════════════
+updateClock();
+setInterval(updateClock, 30000);
+</script>
+</body>
+</html>
